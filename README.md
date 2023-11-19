@@ -21,9 +21,8 @@
    ```
    python manage.py makemigrations
    python manage.py migrate
-
-  * NOTA: no hacer lo de la bd por ahora, se manejará con SQLite para compartir la data temporalmente
    ```
+     * NOTA: no hacer lo de la bd por ahora, se manejará con SQLite para compartir la data temporalmente
    ![bd configuration](image.png)
 5. correr el proyecto
    ```
