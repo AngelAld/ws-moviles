@@ -29,7 +29,7 @@
    python manage.py runserver
    ```
 
-6. Para ver las apis, puedes entrar a docs
+6. Para ver las apis, puedes entrar a la documentación
    ```
-   http://127.0.0.1:8000/docs/
+   http://127.0.0.1:8000
    ```
