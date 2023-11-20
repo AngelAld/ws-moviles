@@ -83,7 +83,7 @@ class HistorialEstado(models.Model):
         EstadoCarga, on_delete=models.PROTECT, related_name="estado"
     )
     fecha_hora = models.DateTimeField(default=now)
-    observacion = models.CharField(max_length=300)
+    observacion = models.CharField(max_length=300, blank=True, null=True)
 
 
 class CargaVehiculo(models.Model):

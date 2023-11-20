@@ -7,6 +7,9 @@ from carga.models import Carga
 class EstadoPago(models.Model):
     nombre = models.CharField(max_length=100)
 
+    def __str__(self) -> str:
+        return self.nombre
+
 
 class Pago(models.Model):
     carga = models.ForeignKey(Carga, on_delete=models.CASCADE)

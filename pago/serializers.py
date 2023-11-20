@@ -21,6 +21,7 @@ class PagoSerializer(serializers.ModelSerializer):
     """
     Serializer para el modelo Pago
     """
+    estado_nombre = serializers.CharField(source="estado")
 
     class Meta:
         model = Pago

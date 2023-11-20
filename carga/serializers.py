@@ -1,6 +1,38 @@
 from rest_framework import serializers
-from .models import Carga, HistorialEstado
+from .models import Carga, HistorialEstado, EstadoCarga
 from django.db import transaction
+from customConfig.models import Config
+
+
+class AnularCargaSerializer(serializers.ModelSerializer):
+    """
+    Serializer for anular the Carga model.
+    """
+
+    nombre_cliente = serializers.CharField(source="cliente.first_name", read_only=True)
+    anular = serializers.BooleanField(write_only=True)
+    estado = serializers.CharField(source="estado.nombre", read_only=True)
+
+    class Meta:
+        model = Carga
+        fields = ["id", "nombre_cliente", "descripcion", "monto", "estado", "anular"]
+        read_only_fields = ["descripcion", "estado", "monto"]
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        if instance.estado.nombre != "PENDIENTE DE ATENCIÓN":
+            raise serializers.ValidationError(
+                "No se puede anular porque no está pendiente de atención"
+            )
+
+        estado, _ = EstadoCarga.objects.get_or_create(nombre="ANULADO")
+        instance.estado = estado
+        instance.save()
+
+        new_hist = HistorialEstado.objects.create(
+            carga=instance, estado=estado, observacion="Anulado por el cliente"
+        )
+        return instance
 
 
 class CargaSerializer(serializers.ModelSerializer):
@@ -9,11 +41,55 @@ class CargaSerializer(serializers.ModelSerializer):
     """
 
     nombre_cliente = serializers.CharField(source="cliente.first_name", read_only=True)
-    observacion = serializers.CharField(allow_blank=True, required=False)
+    clase_nombre = serializers.CharField(source="clase.nombre", read_only=True)
+    tipo_nombre = serializers.CharField(source="tipo.nombre", read_only=True)
+    categoria_nombre = serializers.CharField(source="categoria.nombre", read_only=True)
+    estado_nombre = serializers.CharField(source="estado.nombre", read_only=True)
 
     class Meta:
         model = Carga
         fields = "__all__"
+        read_only_fields = ["estado", "fecha_hora_llegada", "monto"]
+
+    @transaction.atomic
+    def create(self, validated_data):
+        estado, _ = EstadoCarga.objects.get_or_create(nombre="PENDIENTE DE ATENCIÓN")
+        descripcion = validated_data.pop("descripcion")
+        cliente = validated_data.pop("cliente")
+        clase = validated_data.pop("clase")
+        tipo = validated_data.pop("tipo")
+        categoria = validated_data.pop("categoria")
+        peso = validated_data.pop("peso")
+        fecha_hora_partida = validated_data.pop("fecha_hora_partida")
+
+        tarifa, _ = Config.objects.get_or_create(
+            name="tarifa", defaults={"valor": float(20)}
+        )
+        print("----------------------------")
+
+        print(tarifa)
+
+        print("----------------------------")
+        monto = (
+            peso / 1000 * float(tarifa.valor) * 1000
+        )  # este 1000 es la distancia hasta que la calculemos
+
+        print("----------------------------")
+        print(monto)
+
+        instance = Carga.objects.create(
+            cliente=cliente,
+            descripcion=descripcion,
+            clase=clase,
+            tipo=tipo,
+            categoria=categoria,
+            peso=peso,
+            fecha_hora_partida=fecha_hora_partida,
+            monto=monto,
+            estado=estado,
+        )
+        _ = HistorialEstado.objects.create(carga=instance, estado=estado)
+        return instance
 
 
 class HistorialEstadoSerializer(serializers.ModelSerializer):

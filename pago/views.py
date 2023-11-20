@@ -1,6 +1,7 @@
 from customConfig.viewsets import NewModelViewSet
 from .models import EstadoPago, Pago
-
+from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import EstadoPagoSerializer, PagoSerializer
 
 
@@ -20,3 +21,5 @@ class PagoViewSet(NewModelViewSet):
 
     queryset = Pago.objects.all()
     serializer_class = PagoSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["carga"]
