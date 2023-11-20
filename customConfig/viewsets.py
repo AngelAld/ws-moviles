@@ -44,6 +44,15 @@ class NewModelViewSet(
     pass
 
 
+class ListUpdateViewSet(
+    ListResponseMixin,
+    RetrieveResponseMixin,
+    UpdateResponseMixin,
+    GenericViewSet,
+):
+    pass
+
+
 class NoCreateViewSet(
     ListResponseMixin,
     RetrieveResponseMixin,

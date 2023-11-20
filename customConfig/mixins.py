@@ -45,8 +45,21 @@ class ListResponseMixin(
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.filter_queryset(self.get_queryset())
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
             serializer = self.get_serializer(queryset, many=True)
-            return self.render_success(serializer.data, "Listado correcto")
+            if not serializer.data:
+                return Response(
+                    {"status": False, "message": "No hay elementos", "data": {}}
+                )
+            return Response(
+                # serializer.data
+                {"status": True, "message": "Listado", "data": serializer.data}
+            )
         except Exception as e:
             return self.handle_error(e)
 
@@ -73,6 +86,7 @@ class CreateResponseMixin(
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
             return self.render_success(serializer.data, "Creación correcta")
         except Exception as e:
             return self.handle_error(e)

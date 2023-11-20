@@ -2,7 +2,6 @@ from customConfig.viewsets import (
     CreateOnlyModelViewSet,
     NewModelViewSet,
     NoCreateViewSet,
-    AdminViewSet,
 )
 from customConfig.permissions import IsAdminOrReadOnly
 from .models import User
@@ -33,7 +32,7 @@ class ClienteViewSet(NoCreateViewSet):
         return User.objects.filter(cliente_profile__isnull=False)
 
 
-class ClienteAdminViewSet(AdminViewSet):
+class ClienteAdminViewSet(NewModelViewSet):
     """
     ViewSet de clientes para los administradores
     """
@@ -41,7 +40,7 @@ class ClienteAdminViewSet(AdminViewSet):
     queryset = User.objects.all()
     serializer_class = ClienteAdminSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ["cliente_profile__name_rs", "cliente_profile__doc"]
+    search_fields = ["first_name", "cliente_profile__doc"]
     filterset_fields = ["cliente_profile__doc_type", "cliente_profile__status"]
     # permission_classes = [IsAdminOrReadOnly]
     # authentication_classes = [JWTAuthentication]

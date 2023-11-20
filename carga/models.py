@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from conductor.models import Conductor, Vehiculo
+from django.utils.timezone import now
 
 # Create your models here.
 
@@ -8,17 +9,29 @@ from conductor.models import Conductor, Vehiculo
 class ClaseCarga(models.Model):
     nombre = models.CharField(max_length=100)
 
+    def __str__(self) -> str:
+        return self.nombre
+
 
 class TipoCarga(models.Model):
     nombre = models.CharField(max_length=100)
+
+    def __str__(self) -> str:
+        return self.nombre
 
 
 class CategoriaCarga(models.Model):
     nombre = models.CharField(max_length=100)
 
+    def __str__(self) -> str:
+        return self.nombre
+
 
 class EstadoCarga(models.Model):
     nombre = models.CharField(max_length=100)
+
+    def __str__(self) -> str:
+        return self.nombre
 
 
 class EstadoVehiculo(models.Model):
@@ -36,8 +49,8 @@ class Carga(models.Model):
         CategoriaCarga, on_delete=models.PROTECT, related_name="categoria"
     )
     peso = models.FloatField()
-    fecha_hora_partida = models.DateTimeField()
-    fecha_hora_partida = models.DateTimeField(null=True, blank=True)
+    fecha_hora_partida = models.DateTimeField(default=now)
+    fecha_hora_llegada = models.DateTimeField(null=True, blank=True)
     monto = models.FloatField()
     estado = models.ForeignKey(
         EstadoCarga, on_delete=models.PROTECT, related_name="estado_actual"
@@ -69,7 +82,7 @@ class HistorialEstado(models.Model):
     estado = models.ForeignKey(
         EstadoCarga, on_delete=models.PROTECT, related_name="estado"
     )
-    fecha_hora = models.DateTimeField(auto_now_add=True)
+    fecha_hora = models.DateTimeField(default=now)
     observacion = models.CharField(max_length=300)
 
 
