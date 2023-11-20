@@ -2,6 +2,7 @@ from customConfig.viewsets import (
     CreateOnlyModelViewSet,
     NewModelViewSet,
     NoCreateViewSet,
+    WriteOnlyModelViewSet,
 )
 from customConfig.permissions import IsAdminOrReadOnly
 from .models import User
@@ -32,7 +33,7 @@ class ClienteViewSet(NoCreateViewSet):
         return User.objects.filter(cliente_profile__isnull=False)
 
 
-class ClienteAdminViewSet(NewModelViewSet):
+class ClienteEstadoViewSet(WriteOnlyModelViewSet):
     """
     ViewSet de clientes para los administradores
     """

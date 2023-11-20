@@ -10,7 +10,6 @@ from rest_framework.viewsets import GenericViewSet
 
 class WriteOnlyModelViewSet(
     UpdateResponseMixin,
-    DeleteResponseMixin,
     GenericViewSet,
 ):
     pass

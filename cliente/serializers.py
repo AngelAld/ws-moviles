@@ -129,7 +129,7 @@ class ClienteSerializer(serializers.ModelSerializer):
 
 class ClienteAdminSerializer(serializers.ModelSerializer):
     cliente = ClienteAdminProfileSerializer(source="cliente_profile", many=False)
-    name_rs = serializers.CharField(source="first_name")
+    name_rs = serializers.CharField(source="first_name", read_only=True)
 
     class Meta:
         model = User
