@@ -59,10 +59,9 @@ class ClienteSerializer(serializers.ModelSerializer):
             "name_rs",
             "email",
             "password",
-            "is_active",
             "cliente",
         )
-        read_only_fields = ("id", "is_active")
+        read_only_fields = ["id"]
         extra_kwargs = {"password": {"write_only": True}}
 
     @transaction.atomic
@@ -111,7 +110,7 @@ class ClienteSerializer(serializers.ModelSerializer):
             cliente = Cliente.objects.create(
                 user=user, status=status, **cliente_profile_data
             )
-            print(cliente)
+
             group, _ = Group.objects.get_or_create(name="clientes")
 
             user.groups.add(group)

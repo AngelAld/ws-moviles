@@ -37,6 +37,7 @@ class LoginView(TokenObtainPairView):
                 "status": True,
                 "message": "Bienvenido al sistema, " + user.first_name,
                 "data": {
+                    "id": user.id,
                     "email": user.email,
                     "name": user.first_name,
                     "tokens": serializer.validated_data,
