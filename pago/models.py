@@ -16,7 +16,7 @@ class Pago(models.Model):
     nombre_entidad = models.CharField(max_length=100)
     numero_operacion = models.CharField(max_length=100)
     fecha_hora_operacion = models.DateTimeField()
-    voucher = models.CharField(max_length=200)
+    voucher = models.ImageField(upload_to="pago/vouchers/")
     estado = models.ForeignKey(
         EstadoPago, on_delete=models.PROTECT, related_name="estado"
     )

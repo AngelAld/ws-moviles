@@ -4,6 +4,7 @@ from carga.models import Carga
 from cliente.models import Cliente
 from django.contrib.auth.models import User
 from carga.serializers import CargaSerializer
+from django.db.transaction import atomic
 
 
 class EstadoPagoSerializer(serializers.ModelSerializer):
@@ -21,8 +22,15 @@ class PagoSerializer(serializers.ModelSerializer):
     """
     Serializer para el modelo Pago
     """
-    estado_nombre = serializers.CharField(source="estado")
+    estado_nombre = serializers.CharField(source="estado", read_only=True)
 
     class Meta:
         model = Pago
         fields = "__all__"
+        read_only_fields = ["estado"]
+
+    @atomic
+    def create(self, validated_data):
+        estado, _ = EstadoPago.objects.get_or_create(nombre="PENDIENTE DE ATENCIÓN")
+        validated_data["estado"] = estado
+        return super().create(validated_data)

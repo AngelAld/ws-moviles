@@ -12,6 +12,7 @@ class EstadoPagoViewSet(NewModelViewSet):
 
     queryset = EstadoPago.objects.all()
     serializer_class = EstadoPagoSerializer
+    http_method_names = ["get", "post", "put", "delete", "options"]
 
 
 class PagoViewSet(NewModelViewSet):
@@ -23,3 +24,4 @@ class PagoViewSet(NewModelViewSet):
     serializer_class = PagoSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["carga"]
+    http_method_names = ["get", "post", "delete", "options"]

@@ -8,6 +8,9 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -28,3 +31,4 @@ urlpatterns = [
     path("carga/", include("carga.urls")),
     path("pago/", include("pago.urls")),
 ]
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

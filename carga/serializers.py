@@ -4,6 +4,15 @@ from django.db import transaction
 from customConfig.models import Config
 
 
+def calcularDistancia(lat1, lon1, lat2, lon2):
+    """
+    Calcula la distancia entre dos puntos en coordenadas geográficas utilizando la api de google maps.
+    """
+    distancia = 1000
+
+    return distancia
+
+
 class AnularCargaSerializer(serializers.ModelSerializer):
     """
     Serializer for anular the Carga model.
@@ -53,9 +62,14 @@ class CargaSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        cliente = validated_data.pop("cliente")
+
+        if not cliente.groups.filter(name="clientes").exists():
+            raise serializers.ValidationError("el cliente no existe")
+
         estado, _ = EstadoCarga.objects.get_or_create(nombre="PENDIENTE DE ATENCIÓN")
         descripcion = validated_data.pop("descripcion")
-        cliente = validated_data.pop("cliente")
+
         clase = validated_data.pop("clase")
         tipo = validated_data.pop("tipo")
         categoria = validated_data.pop("categoria")
@@ -65,17 +79,9 @@ class CargaSerializer(serializers.ModelSerializer):
         tarifa, _ = Config.objects.get_or_create(
             name="tarifa", defaults={"valor": float(20)}
         )
-        print("----------------------------")
 
-        print(tarifa)
-
-        print("----------------------------")
-        monto = (
-            peso / 1000 * float(tarifa.valor) * 1000
-        )  # este 1000 es la distancia hasta que la calculemos
-
-        print("----------------------------")
-        print(monto)
+        distancia = calcularDistancia(1, 1, 1, 1)
+        monto = peso / 1000 * float(tarifa.valor) * distancia
 
         instance = Carga.objects.create(
             cliente=cliente,
@@ -159,3 +165,9 @@ class CargaEstadoSerializer(serializers.ModelSerializer):
                 carga=instance, estado=new_estado, observacion=new_observacion
             )
         return super().update(instance, validated_data)
+
+
+class EstadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EstadoCarga
+        fields = "__all__"

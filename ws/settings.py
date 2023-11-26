@@ -74,6 +74,9 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # Configuraciones propias
 
 # Application definition
@@ -124,6 +127,7 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.5.0",
     "SERVE_INCLUDE_SCHEMA": False,
     # OTHER SETTINGS
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 CORS_ALLOWED_ORIGINS = [
     "https://example.com",

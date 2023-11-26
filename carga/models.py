@@ -77,7 +77,7 @@ class DireccionLlegada(models.Model):
 
 class HistorialEstado(models.Model):
     carga = models.ForeignKey(
-        Carga, on_delete=models.PROTECT, related_name="historial_carga"
+        Carga, on_delete=models.CASCADE, related_name="historial_carga"
     )
     estado = models.ForeignKey(
         EstadoCarga, on_delete=models.PROTECT, related_name="estado"
