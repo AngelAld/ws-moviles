@@ -1,5 +1,11 @@
 from django.urls import path, include
-from .views import ConductorViewSet, ConductorRegisterView, ConductorAdminViewSet
+from .views import (
+    ConductorViewSet,
+    ConductorRegisterView,
+    ConductorAdminViewSet,
+    VehiculoViewSet,
+    UbicacionViewSet,
+)
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -8,6 +14,7 @@ router.register("conductor-admin", ConductorAdminViewSet, basename="conductor-ad
 router.register(
     "conductor-register", ConductorRegisterView, basename="conductor-register"
 )
-
+router.register("vehiculo", VehiculoViewSet, basename="vehiculos")
+router.register("ubicacion", UbicacionViewSet, basename="ubicaciones")
 
 urlpatterns = [path("", include(router.urls))]

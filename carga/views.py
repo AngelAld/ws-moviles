@@ -4,6 +4,8 @@ from .serializers import (
     CargaEstadoSerializer,
     AnularCargaSerializer,
     EstadoSerializer,
+    CargaVehiculo,
+    AsignarVehiculoSerializer,
 )
 from .models import Carga, EstadoCarga
 from rest_framework import filters
@@ -23,7 +25,7 @@ class CargaViewSet(NewModelViewSet):
     serializer_class = CargaSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ["descripcion"]
-    filterset_fields = ["cliente"]
+    filterset_fields = ["cliente", "carga_vehiculo__conductor"]
     http_method_names = ["get", "post", "delete"]
 
     # def get_queryset(self):
@@ -68,3 +70,13 @@ class EstadoCargaViewSet(NewModelViewSet):
     queryset = EstadoCarga.objects.all()
     serializer_class = EstadoSerializer
     http_method_names = ["get", "post", "put", "delete"]
+
+
+class AsignarVehiculoViewSet(NewModelViewSet):
+    """
+    API endpoint that allows setting a vehicle and driver to a carga
+    """
+
+    queryset = CargaVehiculo.objects.all()
+    serializer_class = AsignarVehiculoSerializer
+    http_method_names = ["post"]

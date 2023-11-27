@@ -1,8 +1,9 @@
 from rest_framework import serializers
-from .models import Conductor
+from .models import Conductor, Vehiculo
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 from usuario.models import Status
+from carga.models import CargaVehiculo, EstadoVehiculo
 
 
 class ConductorProfileSerializer(serializers.ModelSerializer):
@@ -112,7 +113,7 @@ class ConductorSerializer(serializers.ModelSerializer):
                 user=user, status=status, **conductor_profile_data
             )
             print(conductor)
-            group, _ = Group.objects.get_or_create(name="conductors")
+            group, _ = Group.objects.get_or_create(name="conductores")
 
             user.groups.add(group)
 
@@ -170,3 +171,21 @@ class ConductorAdminSerializer(serializers.ModelSerializer):
 
         except Exception as e:
             raise serializers.ValidationError(str(e))
+
+
+class VehiculoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehiculo
+        fields = "__all__"
+
+
+class UbicacionSerializer(serializers.ModelSerializer):
+    vehiculo = serializers.CharField(source="vehiculo.__str__", read_only=True)
+    conductor = serializers.CharField(
+        source="conductor.user.first_name", read_only=True
+    )
+    estado = serializers.CharField(source="estado.nombre", read_only=True)
+
+    class Meta:
+        model = CargaVehiculo
+        fields = "__all__"

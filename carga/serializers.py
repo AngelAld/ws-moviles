@@ -5,18 +5,102 @@ from .models import (
     EstadoCarga,
     DireccionPartida,
     DireccionLlegada,
+    CargaVehiculo,
+    EstadoVehiculo,
 )
 from django.db import transaction
 from customConfig.models import Config
+from googlemaps import Client as GoogleMaps
+import json
+
+gm_key = "AIzaSyBBtg5zkjzwPqi5asBdnVF7zwnfwpNw6Cs"
+
+# instancia  de Google Maps
+gmaps = GoogleMaps(key=gm_key)
 
 
-def calcularDistancia(lat1, lon1, lat2, lon2):
+def distancia_kms(lat1, lon1, lat2, lon2):
+    # Hacer request a la API de Google Maps
+    try:
+        print("entramos a la función")
+        resp = gmaps.distance_matrix(
+            origins=[("{},{}".format(lat1, lon1))],
+            destinations=[("{},{}".format(lat2, lon2))],
+            mode="driving",
+            units="metric",
+        )
+
+        # Extraer distancia de la respuesta
+        distancia = float(resp["rows"][0]["elements"][0]["distance"]["value"]) / 1000
+
+        return distancia
+    except:
+        raise serializers.ValidationError("No se puede calcular la distancia")
+
+
+class CargaVehiculoSerializer(serializers.ModelSerializer):
     """
-    Calcula la distancia entre dos puntos en coordenadas geográficas utilizando la api de google maps.
+    Serializer for the CargaVehiculo model.
     """
-    distancia = 1000
 
-    return distancia
+    vehiculo = serializers.CharField(source="vehiculo.__str__", read_only=True)
+    nombre_conductor = serializers.CharField(
+        source="conductor.first_name", read_only=True
+    )
+    estado = serializers.CharField(source="estado.nombre", read_only=True)
+
+    class Meta:
+        model = CargaVehiculo
+        fields = ["vehiculo", "nombre_conductor", "estado", "lon", "lat", "conductor"]
+
+
+class AsignarVehiculoSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the CargaVehiculo model.
+    """
+
+    vehiculo_nombre = serializers.CharField(source="vehiculo.__str__", read_only=True)
+    conductor_nombre = serializers.CharField(
+        source="conductor.user.first_name", read_only=True
+    )
+    estado_nombre = serializers.CharField(source="estado.nombre", read_only=True)
+
+    class Meta:
+        model = CargaVehiculo
+        fields = [
+            "carga",
+            "vehiculo_nombre",
+            "conductor_nombre",
+            "estado_nombre",
+            "vehiculo",
+            "conductor",
+            "estado",
+            "lon",
+            "lat",
+        ]
+        read_only_fields = ["lon", "lat", "estado"]
+
+    @transaction.atomic
+    def create(self, validated_data):
+        conductor = validated_data.get("conductor")
+        if not conductor.groups.filter(name="conductores").exists():
+            raise serializers.ValidationError("el conductor no existe")
+
+        carga = validated_data.get("carga")
+        estado, _ = EstadoCarga.objects.get_or_create(nombre="VEHICULO ASIGNADO")
+        estado_vehiculo, _ = EstadoVehiculo.objects.get_or_create(
+            nombre="VEHICULO ASIGNADO"
+        )
+        _ = HistorialEstado.objects.create(
+            carga=carga,
+            estado=estado,
+            observacion="Vehiculo asignado por la empresa",
+        )
+        carga.estado = estado
+        carga.save()
+
+        validated_data["estado"] = estado_vehiculo
+        return super().create(validated_data)
 
 
 class DireccionPartidaSerializer(serializers.ModelSerializer):
@@ -26,7 +110,7 @@ class DireccionPartidaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DireccionPartida
-        fields = ["direccion", "lon", "lat"]
+        fields = ["direccion", "lat", "lon"]
 
 
 class DireccionLlegadaSerializer(serializers.ModelSerializer):
@@ -36,7 +120,7 @@ class DireccionLlegadaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DireccionLlegada
-        fields = ["direccion", "lon", "lat"]
+        fields = ["direccion", "lat", "lon"]
 
 
 class AnularCargaSerializer(serializers.ModelSerializer):
@@ -81,9 +165,14 @@ class CargaSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(source="categoria.nombre", read_only=True)
     estado_nombre = serializers.CharField(source="estado.nombre", read_only=True)
     direccion_partida = DireccionPartidaSerializer(
-        many=False, source="direccion_llegada"
+        many=False,
     )
-    direccion_llegada = DireccionLlegadaSerializer(many=False)
+    direccion_llegada = DireccionLlegadaSerializer(
+        many=False,
+    )
+    vehiculos = CargaVehiculoSerializer(
+        many=True, source="carga_vehiculo", read_only=True
+    )
 
     class Meta:
         model = Carga
@@ -101,6 +190,7 @@ class CargaSerializer(serializers.ModelSerializer):
             "fecha_hora_llegada",
             "direccion_partida",
             "direccion_llegada",
+            "vehiculos",
             "cliente",
             "clase",
             "tipo",
@@ -129,11 +219,17 @@ class CargaSerializer(serializers.ModelSerializer):
             name="tarifa", defaults={"valor": float(20)}
         )
 
-        distancia = calcularDistancia(1, 1, 1, 1)
-        monto = peso / 1000 * float(tarifa.valor) * distancia
-
         direccion_partida = validated_data.pop("direccion_partida", {})
         direccion_llegada = validated_data.pop("direccion_llegada", {})
+
+        lon1 = direccion_partida.get("lon", 0)
+        lon2 = direccion_llegada.get("lon", 0)
+        lat1 = direccion_partida.get("lat", 0)
+        lat2 = direccion_llegada.get("lat", 0)
+
+        distancia = distancia_kms(lat1=lat1, lon1=lon1, lat2=lat2, lon2=lon2)
+
+        monto = round(peso / 1000 * float(tarifa.valor) * distancia, 2)
 
         instance = Carga.objects.create(
             cliente=cliente,
@@ -213,7 +309,6 @@ class CargaEstadoSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        print(validated_data)
         new_estado = validated_data.get("estado")
         new_observacion = validated_data.get("observacion")
         if new_estado != instance.estado:

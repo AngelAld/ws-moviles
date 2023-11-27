@@ -37,6 +37,9 @@ class EstadoCarga(models.Model):
 class EstadoVehiculo(models.Model):
     nombre = models.CharField(max_length=100)
 
+    def __str__(self) -> str:
+        return self.nombre
+
 
 class Carga(models.Model):
     cliente = models.ForeignKey(User, on_delete=models.PROTECT, related_name="cliente")
@@ -87,26 +90,37 @@ class HistorialEstado(models.Model):
 
 
 class CargaVehiculo(models.Model):
-    carga = models.ForeignKey(Carga, on_delete=models.PROTECT, related_name="carga")
+    carga = models.ForeignKey(
+        Carga, on_delete=models.CASCADE, related_name="carga_vehiculo"
+    )
     vehiculo = models.ForeignKey(
         Vehiculo, on_delete=models.PROTECT, related_name="vehiculo"
     )
     conductor = models.ForeignKey(
-        Conductor, on_delete=models.PROTECT, related_name="conductor"
+        User, on_delete=models.PROTECT, related_name="conductor"
     )
-    lon = models.CharField(max_length=100)
-    lat = models.CharField(max_length=100)
+    lon = models.CharField(max_length=100, blank=True, null=True)
+    lat = models.CharField(max_length=100, blank=True, null=True)
     estado = models.ForeignKey(
         EstadoVehiculo, on_delete=models.PROTECT, related_name="estado_actual"
     )
 
+    def __str__(self) -> str:
+        return (
+            self.carga.descripcion
+            + " "
+            + self.vehiculo.placa
+            + " "
+            + self.conductor.first_name
+        )
 
-class HistorialVehiculo(models.Model):
-    carga_vehiculo = models.ForeignKey(
-        CargaVehiculo, on_delete=models.PROTECT, related_name="carga_vehiculo"
-    )
-    estado = models.ForeignKey(
-        EstadoVehiculo, on_delete=models.PROTECT, related_name="estado"
-    )
-    fecha_hora = models.DateTimeField()
-    observacion = models.CharField(max_length=300)
+
+# class HistorialVehiculo(models.Model):
+#     carga_vehiculo = models.ForeignKey(
+#         CargaVehiculo, on_delete=models.PROTECT, related_name="carga_vehiculo"
+#     )
+#     estado = models.ForeignKey(
+#         EstadoVehiculo, on_delete=models.PROTECT, related_name="estado"
+#     )
+#     fecha_hora = models.DateTimeField()
+#     observacion = models.CharField(max_length=300)

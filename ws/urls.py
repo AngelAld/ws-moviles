@@ -30,5 +30,6 @@ urlpatterns = [
     path("conductor/", include("conductor.urls")),
     path("carga/", include("carga.urls")),
     path("pago/", include("pago.urls")),
+    path("config/", include("customConfig.urls")),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
