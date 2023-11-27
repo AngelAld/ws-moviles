@@ -5,6 +5,7 @@ from .views import (
     ConductorAdminViewSet,
     VehiculoViewSet,
     UbicacionViewSet,
+    ReportarUbicacionView,
 )
 from rest_framework.routers import DefaultRouter
 
@@ -16,5 +17,7 @@ router.register(
 )
 router.register("vehiculo", VehiculoViewSet, basename="vehiculos")
 router.register("ubicacion", UbicacionViewSet, basename="ubicaciones")
-
+router.register(
+    "reportar-ubicacion", ReportarUbicacionView, basename="reportar-ubicacion"
+)
 urlpatterns = [path("", include(router.urls))]

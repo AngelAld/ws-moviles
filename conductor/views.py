@@ -1,8 +1,5 @@
 from customConfig.viewsets import (
-    CreateOnlyModelViewSet,
     NewModelViewSet,
-    NoCreateViewSet,
-    AdminViewSet,
 )
 from customConfig.permissions import IsAdminOrReadOnly
 from .models import User, Vehiculo
@@ -13,6 +10,7 @@ from .serializers import (
     UbicacionSerializer,
     CargaVehiculo,
     EstadoVehiculo,
+    ReportarUbicacionSerializer,
 )
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -86,3 +84,14 @@ class UbicacionViewSet(NewModelViewSet):
         return CargaVehiculo.objects.exclude(
             estado__in=[estado_asignado, estado_finalizado]
         )
+
+
+class ReportarUbicacionView(NewModelViewSet):
+    queryset = CargaVehiculo.objects.all()
+    serializer_class = ReportarUbicacionSerializer
+    http_method_names = ["put"]
+
+    def get_queryset(self):
+        estado_finalizado = EstadoVehiculo.objects.get(nombre="FINALIZADO")
+
+        return CargaVehiculo.objects.exclude(estado__in=[estado_finalizado])

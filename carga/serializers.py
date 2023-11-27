@@ -51,7 +51,15 @@ class CargaVehiculoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CargaVehiculo
-        fields = ["vehiculo", "nombre_conductor", "estado", "lon", "lat", "conductor"]
+        fields = [
+            "id",
+            "vehiculo",
+            "nombre_conductor",
+            "estado",
+            "lat",
+            "lon",
+            "conductor",
+        ]
 
 
 class AsignarVehiculoSerializer(serializers.ModelSerializer):

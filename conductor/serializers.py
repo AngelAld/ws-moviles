@@ -189,3 +189,12 @@ class UbicacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CargaVehiculo
         fields = "__all__"
+
+
+class ReportarUbicacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CargaVehiculo
+        fields = ["id", "lat", "lon"]
+        read_only_fields = [
+            "id",
+        ]
