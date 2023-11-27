@@ -49,7 +49,7 @@ class Carga(models.Model):
         CategoriaCarga, on_delete=models.PROTECT, related_name="categoria"
     )
     peso = models.FloatField()
-    fecha_hora_partida = models.DateTimeField(default=now)
+    fecha_hora_partida = models.DateTimeField()
     fecha_hora_llegada = models.DateTimeField(null=True, blank=True)
     monto = models.FloatField()
     estado = models.ForeignKey(
@@ -58,8 +58,8 @@ class Carga(models.Model):
 
 
 class DireccionPartida(models.Model):
-    carga = models.ForeignKey(
-        Carga, on_delete=models.PROTECT, related_name="partida_carga"
+    carga = models.OneToOneField(
+        Carga, on_delete=models.CASCADE, related_name="direccion_partida"
     )
     direccion = models.CharField(max_length=100)
     lon = models.CharField(max_length=100)
@@ -67,8 +67,8 @@ class DireccionPartida(models.Model):
 
 
 class DireccionLlegada(models.Model):
-    carga = models.ForeignKey(
-        Carga, on_delete=models.PROTECT, related_name="llegada_carga"
+    carga = models.OneToOneField(
+        Carga, on_delete=models.CASCADE, related_name="direccion_llegada"
     )
     direccion = models.CharField(max_length=100)
     lon = models.CharField(max_length=100)

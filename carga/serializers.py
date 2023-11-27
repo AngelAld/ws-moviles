@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Carga, HistorialEstado, EstadoCarga
+from .models import (
+    Carga,
+    HistorialEstado,
+    EstadoCarga,
+    DireccionPartida,
+    DireccionLlegada,
+)
 from django.db import transaction
 from customConfig.models import Config
 
@@ -11,6 +17,26 @@ def calcularDistancia(lat1, lon1, lat2, lon2):
     distancia = 1000
 
     return distancia
+
+
+class DireccionPartidaSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the DireccionPartida model.
+    """
+
+    class Meta:
+        model = DireccionPartida
+        fields = ["direccion", "lon", "lat"]
+
+
+class DireccionLlegadaSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the DireccionLlegada model.
+    """
+
+    class Meta:
+        model = DireccionLlegada
+        fields = ["direccion", "lon", "lat"]
 
 
 class AnularCargaSerializer(serializers.ModelSerializer):
@@ -54,10 +80,33 @@ class CargaSerializer(serializers.ModelSerializer):
     tipo_nombre = serializers.CharField(source="tipo.nombre", read_only=True)
     categoria_nombre = serializers.CharField(source="categoria.nombre", read_only=True)
     estado_nombre = serializers.CharField(source="estado.nombre", read_only=True)
+    direccion_partida = DireccionPartidaSerializer(
+        many=False, source="direccion_llegada"
+    )
+    direccion_llegada = DireccionLlegadaSerializer(many=False)
 
     class Meta:
         model = Carga
-        fields = "__all__"
+        fields = [
+            "id",
+            "nombre_cliente",
+            "descripcion",
+            "clase_nombre",
+            "monto",
+            "peso",
+            "tipo_nombre",
+            "categoria_nombre",
+            "estado_nombre",
+            "fecha_hora_partida",
+            "fecha_hora_llegada",
+            "direccion_partida",
+            "direccion_llegada",
+            "cliente",
+            "clase",
+            "tipo",
+            "categoria",
+            "estado",
+        ]
         read_only_fields = ["estado", "fecha_hora_llegada", "monto"]
 
     @transaction.atomic
@@ -83,6 +132,9 @@ class CargaSerializer(serializers.ModelSerializer):
         distancia = calcularDistancia(1, 1, 1, 1)
         monto = peso / 1000 * float(tarifa.valor) * distancia
 
+        direccion_partida = validated_data.pop("direccion_partida", {})
+        direccion_llegada = validated_data.pop("direccion_llegada", {})
+
         instance = Carga.objects.create(
             cliente=cliente,
             descripcion=descripcion,
@@ -95,6 +147,10 @@ class CargaSerializer(serializers.ModelSerializer):
             estado=estado,
         )
         _ = HistorialEstado.objects.create(carga=instance, estado=estado)
+
+        _ = DireccionPartida.objects.create(**direccion_partida, carga=instance)
+        _ = DireccionLlegada.objects.create(**direccion_llegada, carga=instance)
+
         return instance
 
 
