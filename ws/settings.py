@@ -13,7 +13,7 @@ SECRET_KEY = "django-insecure-ugj67!$sqmownjx)6d-q=@v84__e(jg*3msnj4h+j22o*77)im
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 MIDDLEWARE = [
@@ -115,6 +115,17 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "db_moviles",
+#         "USER": "testuser",
+#         "PASSWORD": "123456",
+#         "HOST": "localhost",
+#         "port": "3306",
+#     }
+# }
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -137,7 +148,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
     "ROTATE_REFRESH_TOKENS": True,

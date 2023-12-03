@@ -2,7 +2,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
 
 from .serializers import (
-    LoginSerializer,
+    CustomTokenObtainPairSerializer,
     LogoutAdminSerializer,
     LogoutSerializer,
     StatusSerializer,
@@ -19,7 +19,7 @@ from rest_framework import viewsets, filters, status
 
 
 class LoginView(TokenObtainPairView):
-    serializer_class = LoginSerializer
+    serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

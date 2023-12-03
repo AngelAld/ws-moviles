@@ -1,5 +1,9 @@
-from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework import serializers, exceptions
+from rest_framework_simplejwt.serializers import (
+    TokenObtainPairSerializer,
+    TokenObtainSerializer,
+)
+from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import Token
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.token_blacklist.models import (
@@ -8,6 +12,7 @@ from rest_framework_simplejwt.token_blacklist.models import (
 )
 from django.db import transaction
 from .models import Status, TipoDoc
+from django.utils.translation import gettext_lazy as _
 
 # Logins y logouts
 
@@ -17,6 +22,44 @@ class LoginSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         return token
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer, TokenObtainSerializer):
+    # Overriding validate function in the TokenObtainSerializer
+    def validate(self, attrs):
+        authenticate_kwargs = {
+            self.username_field: attrs[self.username_field],
+            "password": attrs["password"],
+        }
+        try:
+            authenticate_kwargs["request"] = self.context["request"]
+        except KeyError:
+            pass
+
+        try:
+            user = User.objects.get(username=authenticate_kwargs["username"])
+            if not user.is_active:
+                self.error_messages["no_active_account"] = _("El usuario esta inactivo")
+                raise exceptions.AuthenticationFailed(
+                    self.error_messages["no_active_account"],
+                    "no_active_account",
+                )
+        except User.DoesNotExist:
+            self.error_messages["no_active_account"] = _("El usuario no existe")
+            raise exceptions.AuthenticationFailed(
+                self.error_messages["no_active_account"],
+                "no_active_account",
+            )
+        self.user = authenticate(**authenticate_kwargs)
+
+        if self.user is None:
+            self.error_messages["no_active_account"] = _("Contraseña incorrecta")
+            raise exceptions.AuthenticationFailed(
+                self.error_messages["no_active_account"],
+                "no_active_account",
+            )
+
+        return {}
 
 
 class LogoutAdminSerializer(serializers.ModelSerializer):
