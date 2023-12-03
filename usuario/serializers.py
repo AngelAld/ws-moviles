@@ -59,7 +59,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer, TokenObtainSeri
                 "no_active_account",
             )
 
-        return {}
+        return super().validate(attrs)
 
 
 class LogoutAdminSerializer(serializers.ModelSerializer):
