@@ -4,7 +4,11 @@ from customConfig.viewsets import (
     NoCreateViewSet,
     WriteOnlyModelViewSet,
 )
-from customConfig.permissions import IsAdminOrReadOnly, IsAuthenticated
+from customConfig.permissions import (
+    IsAdminOrReadOnly,
+    IsAuthenticated,
+    IsDriverOrReadOnly,
+)
 from .models import User
 from .serializers import ClienteSerializer, ClienteAdminSerializer
 from rest_framework import filters
@@ -28,7 +32,7 @@ class ClienteViewSet(NoCreateViewSet):
 
     queryset = User.objects.all()
     serializer_class = ClienteSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsDriverOrReadOnly]
     authentication_classes = [JWTAuthentication]
 
     def get_queryset(self):
@@ -45,7 +49,7 @@ class ClienteEstadoViewSet(WriteOnlyModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ["first_name", "cliente_profile__doc"]
     filterset_fields = ["cliente_profile__doc_type", "cliente_profile__status"]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsDriverOrReadOnly]
     authentication_classes = [JWTAuthentication]
 
     def get_queryset(self):

@@ -3,6 +3,7 @@ from rest_framework.response import Response
 
 from .serializers import (
     CustomTokenObtainPairSerializer,
+    LoginSerializer,
     LogoutAdminSerializer,
     LogoutSerializer,
     StatusSerializer,
@@ -72,7 +73,7 @@ class LogoutViewSet(CreateOnlyModelViewSet):
     serializer_class = LogoutSerializer
 
     def create(self, request, *args, **kwargs):
-        super(LogoutViewSet, self).create(request, *args, **kwargs)
+        return super(LogoutViewSet, self).create(request, *args, **kwargs)
         if request.data.get("all"):
             message = "Se cerraron todas las sesiones"
         else:

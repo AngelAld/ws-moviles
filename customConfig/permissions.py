@@ -41,10 +41,10 @@ class IsDriverOrReadOnly(BasePermission):
 
     def has_permission(self, request, view):
         return bool(
-            request.method in SAFE_METHODS
-            and request.user
-            and request.user.is_authenticated
-            or request.user
+            # request.method in SAFE_METHODS
+            # and request.user
+            # and request.user.is_authenticated
+            request.user
             and request.user.is_authenticated
             and request.user.groups.filter(name="conductores").exists()
         )

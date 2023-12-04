@@ -13,6 +13,10 @@ from rest_framework_simplejwt.token_blacklist.models import (
 from django.db import transaction
 from .models import Status, TipoDoc
 from django.utils.translation import gettext_lazy as _
+from rest_framework_simplejwt.token_blacklist.management.commands import (
+    flushexpiredtokens,
+)
+
 
 # Logins y logouts
 
@@ -25,7 +29,11 @@ class LoginSerializer(TokenObtainPairSerializer):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer, TokenObtainSerializer):
-    # Overriding validate function in the TokenObtainSerializer
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        return token
+
     def validate(self, attrs):
         authenticate_kwargs = {
             self.username_field: attrs[self.username_field],
@@ -80,7 +88,7 @@ class LogoutAdminSerializer(serializers.ModelSerializer):
 
             return user
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(e)
 
 
 class LogoutSerializer(serializers.ModelSerializer):
@@ -107,8 +115,12 @@ class LogoutSerializer(serializers.ModelSerializer):
                 token_instance = OutstandingToken.objects.get(
                     token=validated_data.get("token")
                 )
+
                 if token_instance:
                     _, _ = BlacklistedToken.objects.get_or_create(token=token_instance)
+                else:
+                    raise serializers.ValidationError("Token no encontrado")
+
                 return token_instance
         except Exception as e:
             raise serializers.ValidationError(str(e))

@@ -8,5 +8,5 @@ router.register("config", ConfigViewSet, basename="config")
 
 
 urlpatterns = [
-    path("config/", include(router.urls)),
+    path("", include(router.urls)),
 ]
