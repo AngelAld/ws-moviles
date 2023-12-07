@@ -15,6 +15,7 @@ from .serializers import (
 )
 from customConfig.viewsets import CreateOnlyModelViewSet, NewModelViewSet
 from rest_framework import viewsets, filters, status
+from customConfig.mixins import validateHour
 
 # login y logout
 
@@ -23,6 +24,15 @@ class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
+        # if validateHour():
+        #     return Response(
+        #         {
+        #             "status": False,
+        #             "message": "Nuestro servidor se encuentra en mantenimiento",
+        #             "data": {},
+        #         }
+        #     )
+
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)

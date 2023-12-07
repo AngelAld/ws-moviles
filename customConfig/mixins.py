@@ -2,9 +2,47 @@ from rest_framework.response import Response
 from rest_framework import status, serializers, mixins
 from django.db.models.deletion import ProtectedError
 
+from .models import Config
+from datetime import datetime, timedelta
+
+
+def validateHour():
+    horainicio = Config.objects.get(name="horainicio").valor
+    horafin = Config.objects.get(name="horafin").valor
+
+    # Obtén la hora actual
+    hora_actual = datetime.now()
+
+    # Convierte la cadena en un objeto de tiempo
+    hora_inicio = datetime.strptime(horainicio, "%H:%M").time()
+    hora_fin = datetime.strptime(horafin, "%H:%M").time()
+
+    # Ajusta el tiempo actual según la diferencia horaria (5 horas en este caso)
+    diferencia_horaria = timedelta(hours=-5)
+    hora_actual_ajustada = hora_actual + diferencia_horaria
+    print("##########")
+    print(hora_actual_ajustada)
+    print(hora_inicio)
+    print(hora_fin)
+    # Compara las horas
+    if (
+        hora_fin >= hora_actual_ajustada.time()
+        and hora_inicio <= hora_actual_ajustada.time()
+    ):
+        return True
+    return False
+
 
 class SuccessResponseMixin:
     def render_success(self, data, message):
+        # if validateHour():
+        #     return Response(
+        #         {
+        #             "status": False,
+        #             "message": "Nuestro servidor se encuentra en mantenimiento",
+        #             "data": {},
+        #         }
+        #     )
         if not data:
             return Response(
                 {"status": False, "message": "No hay elementos", "data": data}
@@ -14,6 +52,14 @@ class SuccessResponseMixin:
 
 class ErrorResponseMixin:
     def handle_error(self, exc):
+        # # if validateHour():
+        #     return Response(
+        #         {
+        #             "status": False,
+        #             "message": "Nuestro servidor se encuentra en mantenimiento",
+        #             "data": {},
+        #         }
+        #     )
         if isinstance(exc, serializers.ValidationError):
             return Response(
                 {"status": False, "message": "Error de validación", "data": exc.detail},
@@ -44,6 +90,14 @@ class ListResponseMixin(
 ):
     def list(self, request, *args, **kwargs):
         try:
+            # if validateHour():
+            #     return Response(
+            #         {
+            #             "status": False,
+            #             "message": "Nuestro servidor se encuentra en mantenimiento",
+            #             "data": {},
+            #         }
+            #     )
             queryset = self.filter_queryset(self.get_queryset())
 
             page = self.paginate_queryset(queryset)
@@ -52,9 +106,10 @@ class ListResponseMixin(
                 return self.get_paginated_response(serializer.data)
 
             serializer = self.get_serializer(queryset, many=True)
+
             if not serializer.data:
                 return Response(
-                    {"status": False, "message": "No hay elementos", "data": {}}
+                    {"status": False, "message": "No hay elementos", "data": []}
                 )
             return Response(
                 # serializer.data

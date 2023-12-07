@@ -58,24 +58,35 @@ class Carga(models.Model):
     estado = models.ForeignKey(
         EstadoCarga, on_delete=models.PROTECT, related_name="estado_actual"
     )
+    partida = models.CharField(max_length=400)
+    llegada = models.CharField(max_length=400)
+    forma_pago = models.IntegerField(default=1)
 
 
-class DireccionPartida(models.Model):
-    carga = models.OneToOneField(
-        Carga, on_delete=models.CASCADE, related_name="direccion_partida"
-    )
-    direccion = models.CharField(max_length=100)
-    lon = models.CharField(max_length=100)
-    lat = models.CharField(max_length=100)
+class Cuotas(models.Model):
+    carga = models.ForeignKey(Carga, on_delete=models.CASCADE, related_name="cuotas")
+    numero_cuota = models.IntegerField()
+    fecha_pago = models.DateTimeField()
+    monto_cuota = models.FloatField()
+    fecha_hora_registro = models.DateTimeField()
 
 
-class DireccionLlegada(models.Model):
-    carga = models.OneToOneField(
-        Carga, on_delete=models.CASCADE, related_name="direccion_llegada"
-    )
-    direccion = models.CharField(max_length=100)
-    lon = models.CharField(max_length=100)
-    lat = models.CharField(max_length=100)
+# class DireccionPartida(models.Model):
+#     carga = models.OneToOneField(
+#         Carga, on_delete=models.CASCADE, related_name="direccion_partida"
+#     )
+#     direccion = models.CharField(max_length=100)
+#     lon = models.CharField(max_length=100)
+#     lat = models.CharField(max_length=100)
+
+
+# class DireccionLlegada(models.Model):
+#     carga = models.OneToOneField(
+#         Carga, on_delete=models.CASCADE, related_name="direccion_llegada"
+#     )
+#     direccion = models.CharField(max_length=100)
+#     lon = models.CharField(max_length=100)
+#     lat = models.CharField(max_length=100)
 
 
 class HistorialEstado(models.Model):

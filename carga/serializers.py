@@ -1,17 +1,17 @@
+from datetime import datetime, timedelta
 from rest_framework import serializers
 from .models import (
     Carga,
+    Cuotas,
     HistorialEstado,
     EstadoCarga,
-    DireccionPartida,
-    DireccionLlegada,
     CargaVehiculo,
     EstadoVehiculo,
 )
 from django.db import transaction
 from customConfig.models import Config
 from googlemaps import Client as GoogleMaps
-import json
+import calendar
 
 gm_key = "AIzaSyBBtg5zkjzwPqi5asBdnVF7zwnfwpNw6Cs"
 
@@ -19,13 +19,13 @@ gm_key = "AIzaSyBBtg5zkjzwPqi5asBdnVF7zwnfwpNw6Cs"
 gmaps = GoogleMaps(key=gm_key)
 
 
-def distancia_kms(lat1, lon1, lat2, lon2):
+def distancia_kms(partida, llegada):
     # Hacer request a la API de Google Maps
     try:
         print("entramos a la función")
         resp = gmaps.distance_matrix(
-            origins=[("{},{}".format(lat1, lon1))],
-            destinations=[("{},{}".format(lat2, lon2))],
+            origins=partida,
+            destinations=llegada,
             mode="driving",
             units="metric",
         )
@@ -111,24 +111,30 @@ class AsignarVehiculoSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class DireccionPartidaSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the DireccionPartida model.
-    """
+# class DireccionPartidaSerializer(serializers.ModelSerializer):
+#     """
+#     Serializer for the DireccionPartida model.
+#     """
 
+#     class Meta:
+#         model = DireccionPartida
+#         fields = ["direccion", "lat", "lon"]
+
+
+# class DireccionLlegadaSerializer(serializers.ModelSerializer):
+#     """
+#     Serializer for the DireccionLlegada model.
+#     """
+
+#     class Meta:
+#         model = DireccionLlegada
+#         fields = ["direccion", "lat", "lon"]
+
+
+class CuotasSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DireccionPartida
-        fields = ["direccion", "lat", "lon"]
-
-
-class DireccionLlegadaSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the DireccionLlegada model.
-    """
-
-    class Meta:
-        model = DireccionLlegada
-        fields = ["direccion", "lat", "lon"]
+        model = Cuotas
+        fields = ["numero_cuota", "fecha_pago", "monto_cuota", "fecha_hora_registro"]
 
 
 class AnularCargaSerializer(serializers.ModelSerializer):
@@ -172,15 +178,13 @@ class CargaSerializer(serializers.ModelSerializer):
     tipo_nombre = serializers.CharField(source="tipo.nombre", read_only=True)
     categoria_nombre = serializers.CharField(source="categoria.nombre", read_only=True)
     estado_nombre = serializers.CharField(source="estado.nombre", read_only=True)
-    direccion_partida = DireccionPartidaSerializer(
-        many=False,
-    )
-    direccion_llegada = DireccionLlegadaSerializer(
-        many=False,
-    )
     vehiculos = CargaVehiculoSerializer(
         many=True, source="carga_vehiculo", read_only=True
     )
+    numero_cuotas = serializers.IntegerField(required=False, default=0, write_only=True)
+    cuotas = CuotasSerializer(read_only=True, many=True)
+    dia_pago = serializers.IntegerField(required=False, write_only=True)
+    num_cuotas = serializers.IntegerField(source="cuotas.count", read_only=True)
 
     class Meta:
         model = Carga
@@ -196,14 +200,19 @@ class CargaSerializer(serializers.ModelSerializer):
             "estado_nombre",
             "fecha_hora_partida",
             "fecha_hora_llegada",
-            "direccion_partida",
-            "direccion_llegada",
+            "partida",
+            "llegada",
             "vehiculos",
             "cliente",
             "clase",
             "tipo",
             "categoria",
             "estado",
+            "forma_pago",
+            "numero_cuotas",
+            "num_cuotas",
+            "dia_pago",
+            "cuotas",
         ]
         read_only_fields = ["estado", "fecha_hora_llegada", "monto"]
 
@@ -227,17 +236,14 @@ class CargaSerializer(serializers.ModelSerializer):
             name="tarifa", defaults={"valor": float(20)}
         )
 
-        direccion_partida = validated_data.pop("direccion_partida", {})
-        direccion_llegada = validated_data.pop("direccion_llegada", {})
+        direccion_partida = validated_data.pop("partida")
+        direccion_llegada = validated_data.pop("llegada")
 
-        lon1 = direccion_partida.get("lon", 0)
-        lon2 = direccion_llegada.get("lon", 0)
-        lat1 = direccion_partida.get("lat", 0)
-        lat2 = direccion_llegada.get("lat", 0)
-
-        distancia = distancia_kms(lat1=lat1, lon1=lon1, lat2=lat2, lon2=lon2)
+        distancia = distancia_kms(direccion_partida, direccion_llegada)
 
         monto = round(peso / 1000 * float(tarifa.valor) * distancia, 2)
+
+        forma_pago = validated_data.pop("forma_pago")
 
         instance = Carga.objects.create(
             cliente=cliente,
@@ -247,13 +253,45 @@ class CargaSerializer(serializers.ModelSerializer):
             categoria=categoria,
             peso=peso,
             fecha_hora_partida=fecha_hora_partida,
+            partida=direccion_partida,
+            llegada=direccion_llegada,
             monto=monto,
             estado=estado,
+            forma_pago=forma_pago,
         )
+
         _ = HistorialEstado.objects.create(carga=instance, estado=estado)
 
-        _ = DireccionPartida.objects.create(**direccion_partida, carga=instance)
-        _ = DireccionLlegada.objects.create(**direccion_llegada, carga=instance)
+        if forma_pago == 2:
+            numero_cuotas = validated_data.pop("numero_cuotas")
+
+            monto_cuota = monto / numero_cuotas
+
+            dia_pago = validated_data.pop("dia_pago")
+
+            if numero_cuotas > 6:
+                monto_cuota = monto_cuota * 1.1
+
+            for i in range(numero_cuotas):
+                today = datetime.today()
+                month = today.month + i + 1
+                year = today.year
+                if month > 12:
+                    month = 1 + i
+                    year = year + 1
+
+                fecha_pago = datetime(year=year, month=month, day=dia_pago)
+
+                print("#######3")
+                print(fecha_pago)
+
+                Cuotas.objects.create(
+                    carga=instance,
+                    numero_cuota=i + 1,
+                    fecha_pago=fecha_pago,
+                    monto_cuota=monto_cuota,
+                    fecha_hora_registro=datetime.now(),
+                )
 
         return instance
 
